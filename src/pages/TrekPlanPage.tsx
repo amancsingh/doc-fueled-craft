@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { SAMPLE_TRAILS } from "@/data/trails";
+import { SAMPLE_TRAILS, Trail } from "@/data/trails";
 import { planTrek, TrekPlanInput, TrekPlanResult } from "@/lib/trekPlanner";
 import { getHazardsByTrail, Hazard } from "@/lib/hazardDb";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { ArrowLeft, Clock, Droplets, Utensils, PauseCircle, AlertTriangle, Mountain } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import "leaflet/dist/leaflet.css";
@@ -82,26 +81,7 @@ const TrekPlanPage = () => {
       <main className="container mx-auto px-4 py-6 grid gap-6 lg:grid-cols-2">
         {/* Map */}
         <div className="rounded-2xl overflow-hidden shadow-card border border-border h-[300px] lg:h-full min-h-[300px]">
-          <MapContainer center={[trail.lat, trail.lng]} zoom={13} className="h-full w-full" scrollWheelZoom={false}>
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <Marker position={[trail.lat, trail.lng]}>
-              <Popup>{trail.name}</Popup>
-            </Marker>
-            {hazards.map(h => (
-              <Marker key={h.id} position={[h.lat, h.lng]} icon={hazardIcon}>
-                <Popup>
-                  <strong className="capitalize">{h.category.replace("_", " ")}</strong>
-                  <br />
-                  {h.description}
-                  <br />
-                  <span className="text-xs text-gray-500">{new Date(h.reported_at).toLocaleDateString()}</span>
-                </Popup>
-              </Marker>
-            ))}
-          </MapContainer>
+          <TrailMap trail={trail} hazards={hazards} />
         </div>
 
         <div className="space-y-6">
@@ -195,6 +175,60 @@ const TrekPlanPage = () => {
     </div>
   );
 };
+
+function TrailMap({ trail, hazards }: { trail: Trail; hazards: Hazard[] }) {
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const markersRef = useRef<L.LayerGroup | null>(null);
+
+  useEffect(() => {
+    if (!mapContainerRef.current || mapRef.current) return;
+
+    mapRef.current = L.map(mapContainerRef.current, {
+      center: [trail.lat, trail.lng],
+      zoom: 13,
+      scrollWheelZoom: false,
+    });
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(mapRef.current);
+
+    markersRef.current = L.layerGroup().addTo(mapRef.current);
+
+    return () => {
+      mapRef.current?.remove();
+      mapRef.current = null;
+      markersRef.current = null;
+    };
+  }, [trail.lat, trail.lng]);
+
+  useEffect(() => {
+    if (!mapRef.current || !markersRef.current) return;
+
+    markersRef.current.clearLayers();
+
+    L.marker([trail.lat, trail.lng])
+      .bindPopup(trail.name)
+      .addTo(markersRef.current);
+
+    hazards.forEach((h) => {
+      L.marker([h.lat, h.lng], { icon: hazardIcon })
+        .bindPopup(
+          `<div>
+            <p><strong>${h.category.replace("_", " ")}</strong></p>
+            <p>${h.description}</p>
+            <p>${new Date(h.reported_at).toLocaleDateString()}</p>
+          </div>`
+        )
+        .addTo(markersRef.current!);
+    });
+
+    mapRef.current.setView([trail.lat, trail.lng], 13);
+  }, [trail, hazards]);
+
+  return <div ref={mapContainerRef} className="h-full w-full" aria-label="Trail map" />;
+}
 
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
