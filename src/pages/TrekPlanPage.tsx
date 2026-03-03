@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { SAMPLE_TRAILS } from "@/data/trails";
 import { planTrek, TrekPlanInput, TrekPlanResult } from "@/lib/trekPlanner";
+import { getHazardsByTrail, Hazard } from "@/lib/hazardDb";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { ArrowLeft, Clock, Droplets, Utensils, PauseCircle, AlertTriangle, Mountain } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,6 +17,15 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
 });
 
+const hazardIcon = new L.Icon({
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
 const TrekPlanPage = () => {
   const { trailId } = useParams();
   const navigate = useNavigate();
@@ -27,6 +37,13 @@ const TrekPlanPage = () => {
     fitness_level: "intermediate",
   });
   const [result, setResult] = useState<TrekPlanResult | null>(null);
+  const [hazards, setHazards] = useState<Hazard[]>([]);
+
+  useEffect(() => {
+    if (trail) {
+      getHazardsByTrail(trail.id).then(setHazards);
+    }
+  }, [trail]);
 
   if (!trail) {
     return (
@@ -73,6 +90,17 @@ const TrekPlanPage = () => {
             <Marker position={[trail.lat, trail.lng]}>
               <Popup>{trail.name}</Popup>
             </Marker>
+            {hazards.map(h => (
+              <Marker key={h.id} position={[h.lat, h.lng]} icon={hazardIcon}>
+                <Popup>
+                  <strong className="capitalize">{h.category.replace("_", " ")}</strong>
+                  <br />
+                  {h.description}
+                  <br />
+                  <span className="text-xs text-gray-500">{new Date(h.reported_at).toLocaleDateString()}</span>
+                </Popup>
+              </Marker>
+            ))}
           </MapContainer>
         </div>
 
