@@ -94,10 +94,17 @@ function TrailCard({ trail, index }: { trail: Trail; index: number }) {
       className="bg-card rounded-2xl shadow-card hover:shadow-elevated transition-shadow border border-border overflow-hidden cursor-pointer group"
       onClick={() => navigate(`/plan/${trail.id}`)}
     >
-      <div className="gradient-hero h-32 flex items-end p-4">
-        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${difficultyColors[trail.difficulty]}`}>
-          {trail.difficulty}
-        </span>
+      <div className="relative">
+        {trail.image ? (
+          <img src={trail.image} alt={trail.name} className="h-40 w-full object-cover" loading="lazy" />
+        ) : (
+          <div className="gradient-hero h-40" />
+        )}
+        <div className="absolute bottom-3 left-3">
+          <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${difficultyColors[trail.difficulty]}`}>
+            {trail.difficulty}
+          </span>
+        </div>
       </div>
       <div className="p-5">
         <h3 className="font-semibold font-display text-lg mb-1 group-hover:text-primary transition-colors">{trail.name}</h3>

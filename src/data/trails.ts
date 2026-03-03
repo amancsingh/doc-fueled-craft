@@ -1,3 +1,7 @@
+import trailKothaligad from "@/assets/trail-kothaligad.jpg";
+import trailHarishchandragad from "@/assets/trail-harishchandragad.jpg";
+import trailLohagad from "@/assets/trail-lohagad.jpg";
+
 export interface Trail {
   id: string;
   name: string;
@@ -22,6 +26,7 @@ export const SAMPLE_TRAILS: Trail[] = [
     lng: 73.4660,
     description: "A historic hill fort near Karjat with panoramic views of the Sahyadri range. The pinnacle offers a 360° view.",
     difficulty: "moderate",
+    image: trailKothaligad,
   },
   {
     id: "t2",
@@ -33,6 +38,7 @@ export const SAMPLE_TRAILS: Trail[] = [
     lng: 73.7772,
     description: "One of the toughest treks in Maharashtra. The Konkan Kada cliff face is breathtaking and vertigo-inducing.",
     difficulty: "hard",
+    image: trailHarishchandragad,
   },
   {
     id: "t3",
@@ -44,5 +50,6 @@ export const SAMPLE_TRAILS: Trail[] = [
     lng: 73.4769,
     description: "An easy weekend trek near Lonavala with well-carved stone steps and Vinchu Kata (Scorpion Tail) viewpoint.",
     difficulty: "easy",
+    image: trailLohagad,
   },
 ];
